@@ -1,7 +1,6 @@
 .vscode
 *.so
 build/*
-voroana/voro++-0.4.6/*
 voroana/voronoi.cpp
 tests/
 __pycache__

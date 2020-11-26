@@ -42,6 +42,8 @@ cdef extern from "voro++.hh" namespace "voro":
 
     cppclass voronoicell_neighbor:
         voronoicell()
+        void init(double, double, double, double, double, double)
+        cbool nplane(double, double, double, int)
         void centroid(double &, double &, double &)
         double volume()
         double max_radius_squared()
@@ -181,6 +183,12 @@ cdef class Cell:
         self.thisptr.neighbors(v)
         return v
 
+    def init(self, double xmin, double xmax, double ymin, double ymax, double zmin, double zmax):
+        self.thisptr.init(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def nplane(self, double x, double y, double z, int p_id):
+        return bool(self.thisptr.nplane(x, y, z, p_id))
+        
     def __str__(self):
         return '<Cell {0}>'.format(self._id)
 

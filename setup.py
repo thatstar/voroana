@@ -2,6 +2,7 @@ from setuptools import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
 
+
 extensions = [
     Extension(
         name="voroana.voronoi",
@@ -15,6 +16,7 @@ extensions = [
         language="c++"
     )
 ]
+
 
 setup(
     name='voroana',
