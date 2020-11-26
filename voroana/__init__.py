@@ -5,7 +5,7 @@ from ase.data import atomic_numbers
 from ase.geometry import find_mic
 
 
-__all__ = ["cell_to_hmatrix", "get_atomic_radius", "voronoi_analysis"]
+__all__ = ["cell_to_hmatrix", "get_atomic_radius", "voronoi_analysis", "plot_face_area_distribution"]
 
 
 def get_atomic_radius(symbols):
@@ -61,12 +61,12 @@ def guess_grid(n, lx, ly, lz):
 
 
 def refine_cell(index, cell, atoms, cutoff, relative):
-    lx, _, ly, _, _, lz = a.cell[np.tril_indices(3)].tolist()
+    lx, _, ly, _, _, lz = atoms.cell[np.tril_indices(3)].tolist()
     fa = cell.face_areas()
     fs = 1.0
     if relative:
         fs = 1/sum(fa)
-    fc = [i*fs > ratio for i in fa]
+    fc = [i*fs > cutoff for i in fa]
     if all(fc):
         return cell
     else:
@@ -84,7 +84,7 @@ def refine_cell(index, cell, atoms, cutoff, relative):
         return cnew
 
 
-def voronoi_analysis(atoms, outputs="ln", max_face_orders=6, radius=None, cutoff=0.02, relative=True):
+def voronoi_analysis(atoms, outputs="ln", max_face_orders=6, radius=None, cutoff=0.0, relative=False):
     if not atoms.pbc.all():
         raise RuntimeError("Only full pbc conditions supported so far!")
     a = cell_to_hmatrix(atoms)
@@ -145,4 +145,18 @@ def voronoi_analysis(atoms, outputs="ln", max_face_orders=6, radius=None, cutoff
                 results[names[i]].append(cell.volume())
 
     return results
+
+
+def plot_face_area_distribution(vs):
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    fs = []
+    for i in vs['face_areas']:
+        for j in i:
+            fs.append(j)
+    fs = np.array(fs)
+    sns.distplot(fs, hist=True, kde=True, bins=50, hist_kws={"edgecolor": "black"})
+    plt.xlabel("face areas")
+    plt.ylabel("density")
+    plt.show()
 
