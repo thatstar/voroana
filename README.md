@@ -72,7 +72,7 @@ Currently, only Atoms object with full PBC condition (`atoms.pbc = True`) is sup
 
 # License
 
-The code is released under the GPLv3 license while the voro++ code is relesed under the BSD license.
+The code is released under the GPLv3 license while the voro++ code is released under the BSD license.
 
 
 
