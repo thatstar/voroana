@@ -12,7 +12,7 @@ def get_atomic_radius(symbols):
     # -----------------------------------------------------------------------------
     #  Atomic radius data taken from:
     #  Wikipage of Atomic radius of elements
-    # 
+    #
     #  As atomic radius are not uniquely determined, the priority in selecting
     #  the value for each element is as follows:
     #    Metals    : Metallic radius -> empirical -> van der Waals -> Calculated
@@ -47,7 +47,7 @@ def get_atomic_radius(symbols):
         1.210, 1.190, 1.180, 1.130, 1.120, # Sg - Ds  106- 110
         1.180, 1.300                       # Rg - Cn  111- 112
     ]
-    
+
     return {i: atomic_radius[atomic_numbers[i]] for i in set(symbols)}
 
 
@@ -84,7 +84,31 @@ def refine_cell(index, cell, atoms, cutoff, relative):
         return cnew
 
 
-def voronoi_analysis(atoms, outputs="ln", max_face_orders=6, radius=None, cutoff=0.0, relative=False):
+def voronoi_analysis(atoms, outputs="ilsnv", max_face_orders=6, radius=None, cutoff=0.0, relative=False):
+    """
+    Perform analysis on an ASE atoms object.
+
+    Arguments:
+        atoms:              ASE atoms object, only PBC=True is supported so far.
+        outputs:            str, tags for returned cell related quantities, each character will
+                            correspond a desired quantity. Allowed values are:
+                            "i": "indices",             Voronoi index up to max_face_orders
+                            "l": "labels",              A string label of Voronoi index
+                            "n": "neighbors",           Neighbors of the centering atom
+                            "N": "neighbor_vectors",    Neighbor vectors of the neighbors
+                            "s": "face_areas",          Face areas of faces of a single Voronoi cell
+                            "v": "volumes",             Volume of the current Voronoi cell
+        max_face_orders:    int, maximum face orders for calculating the Voronoi indices.
+        radius:             dict or None, Atomic radius for polyverse Voronoi calculations,
+                            use None to use the regular one.
+        cutoff:             float, face area cutoff for removing the tiny cell faces.
+        relative:           bool, If set to True, the cutoff will be treated as a relative cutoff
+                            which must be in [0, 1], a typical value of relative cutoff is 2% but *TEST*
+                            for your own systems.
+    Returns:
+        A dict containing calculated Voronoi properties will be returned. The order is the same as the one
+        of passed atoms.
+    """
     if not atoms.pbc.all():
         raise RuntimeError("Only full pbc conditions supported so far!")
     a = cell_to_hmatrix(atoms)
@@ -147,16 +171,18 @@ def voronoi_analysis(atoms, outputs="ln", max_face_orders=6, radius=None, cutoff
     return results
 
 
-def plot_face_area_distribution(vs):
+def plot_face_area_distribution(vs, relative=False):
     import seaborn as sns
     import matplotlib.pyplot as plt
     fs = []
     for i in vs['face_areas']:
         for j in i:
-            fs.append(j)
+            if relative:
+                fs.append(j/sum(i))
+            else:
+                fs.append(j)
     fs = np.array(fs)
     sns.distplot(fs, hist=True, kde=True, bins=50, hist_kws={"edgecolor": "black"})
     plt.xlabel("face areas")
     plt.ylabel("density")
     plt.show()
-
