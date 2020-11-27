@@ -123,11 +123,14 @@ cdef class Cell:
     def number_of_faces(self):
         return self.thisptr.number_of_faces()
 
-    def centroid(self):
+    def centroid(self, cbool shift=False):
         cdef double cx = 0.0, cy = 0.0, cz = 0.0
         self.thisptr.centroid(cx, cy, cz)
-        x, y, z = self.pos
-        return cx + x, cy + y, cz + z
+        if shift:
+            x, y, z = self.pos
+            return cx + x, cy + y, cz + z
+        else:
+            return cx, cy, cz
 
     def vertex_orders(self):
         cdef vector[int] v
@@ -188,7 +191,7 @@ cdef class Cell:
 
     def nplane(self, double x, double y, double z, int p_id):
         return bool(self.thisptr.nplane(x, y, z, p_id))
-        
+
     def __str__(self):
         return '<Cell {0}>'.format(self._id)
 

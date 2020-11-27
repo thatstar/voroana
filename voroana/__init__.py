@@ -98,6 +98,7 @@ def voronoi_analysis(atoms, outputs="ilsnv", max_face_orders=6, radius=None, cut
                             "N": "neighbor_vectors",    Neighbor vectors of the neighbors
                             "s": "face_areas",          Face areas of faces of a single Voronoi cell
                             "v": "volumes",             Volume of the current Voronoi cell
+                            "c": "centroid_vectors",    Vectors from atoms to their cell centroids.
         max_face_orders:    int, maximum face orders for calculating the Voronoi indices.
         radius:             dict or None, Atomic radius for polyverse Voronoi calculations,
                             use None to use the regular one.
@@ -115,7 +116,7 @@ def voronoi_analysis(atoms, outputs="ilsnv", max_face_orders=6, radius=None, cut
     bx, bxy, by, bxz, byz, bz = a.cell[np.tril_indices(3)].tolist()
     nx, ny, nz = guess_grid(len(a), bx, by, bz)
     if np.allclose(a.cell[np.tril_indices(3, k=-1)], 0.0):
-        if radius == None:
+        if radius is None:
             con = Container(0, bx, 0, by, 0, bz, nx, ny, nz, True, True, True, 8)
             for i in a:
                 con.put(i.index, i.x, i.y, i.z)
@@ -124,7 +125,7 @@ def voronoi_analysis(atoms, outputs="ilsnv", max_face_orders=6, radius=None, cut
             for i in a:
                 con.put(i.index, i.x, i.y, i.z, radius[i.symbol])
     else:
-        if radius == None:
+        if radius is None:
             con = ContainerPeriodic(bx, bxy, by, bxz, byz, bz, nx, ny, nz, 8)
             for i in a:
                 con.put(i.index, i.x, i.y, i.z)
@@ -143,7 +144,8 @@ def voronoi_analysis(atoms, outputs="ilsnv", max_face_orders=6, radius=None, cut
         "n": "neighbors",
         "N": "neighbor_vectors",
         "s": "face_areas",
-        "v": "volumes"
+        "v": "volumes",
+        "c": "centroid_vectors"
     }
 
     results = {names[i]: [] for i in outputs}
@@ -167,6 +169,8 @@ def voronoi_analysis(atoms, outputs="ilsnv", max_face_orders=6, radius=None, cut
                 results[names[i]].append(cell.face_areas())
             if i == "v":
                 results[names[i]].append(cell.volume())
+            if i == "c":
+                results[names[i]].append(cell.centroid())
 
     return results
 

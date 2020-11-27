@@ -15,7 +15,8 @@ The **voroana** library consists as a cython interface to the **voro++** library
 3. Neighbor list based on the Voronoi tessellation.
 4. Neighbor vectors.
 5. Face areas of the Voronoi cells.
-   
+6. Vectors from atoms to their cell centroids.
+
 
 Absolute or relative face area based cutoff can be applied to remove tiny cell faces during the calculation and radical Voronoi tessellations can be performed on requirement.
 
