@@ -135,7 +135,9 @@ def voronoi_analysis(atoms, outputs="ilsnv", max_face_orders=6, radius=None, cut
                 con.put(i.index, i.x, i.y, i.z, radius[i.symbol])
     cells = con.get_cells()
     assert len(cells) == len(a)
+    cell_ids = []
     for i in range(len(cells)):
+        cell_ids.append(cells[i].id)
         cells[i] = refine_cell(cells[i].id, cells[i], a, cutoff, relative)
 
     names = {
@@ -149,7 +151,7 @@ def voronoi_analysis(atoms, outputs="ilsnv", max_face_orders=6, radius=None, cut
     }
 
     results = {names[i]: [] for i in outputs}
-    for cell in cells:
+    for ic, cell in enumerate(cells):
         t1 = cell.face_orders()
         t2 = [t1.count(i) for i in range(3, max_face_orders + 1)]
         for i in outputs:
@@ -162,8 +164,8 @@ def voronoi_analysis(atoms, outputs="ilsnv", max_face_orders=6, radius=None, cut
             if i == "N":
                 neighbors = cell.neighbors()
                 normals = np.array(cell.normals())
-                _, d = find_mic(a.positions[neighbors, :] - a.positions[cell.id, :], a.cell)
-                vectors = normals[:,:]*d[:,np.newaxis]
+                _, d = find_mic(a.positions[neighbors, :] - a.positions[cell_ids[ic], :], a.cell)
+                vectors = normals[:,:]*d[:, np.newaxis]
                 results[names[i]].append(vectors)
             if i == "s":
                 results[names[i]].append(cell.face_areas())
