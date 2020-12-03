@@ -73,6 +73,8 @@ def refine_cell(index, cell, atoms, cutoff, relative):
         cnew = Cell()
         cnew.init(-lx, lx, -ly, ly, -lz, lz)
         neighbors = cell.neighbors()
+        if index in neighbors:
+            raise RuntimeError("Self should not be in neighbors!")
         normals = np.array(cell.normals())
         _, d = find_mic(atoms.positions[neighbors, :] - atoms.positions[index, :], atoms.cell)
         vectors = normals[:,:]*d[:,np.newaxis]
@@ -163,6 +165,8 @@ def voronoi_analysis(atoms, outputs="ilsnv", max_face_orders=6, radius=None, cut
                 results[names[i]].append(cell.neighbors())
             if i == "N":
                 neighbors = cell.neighbors()
+                if cell_ids[ic] in neighbors:
+                    raise RuntimeError("Self should not be in neighbors!")
                 normals = np.array(cell.normals())
                 _, d = find_mic(a.positions[neighbors, :] - a.positions[cell_ids[ic], :], a.cell)
                 vectors = normals[:,:]*d[:, np.newaxis]
