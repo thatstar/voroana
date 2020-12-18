@@ -22,6 +22,7 @@ Absolute or relative face area based cutoff can be applied to remove tiny cell f
 Additionaly, a set of analysis functions based on Voronoi analysis are provided:
 
 1. Bond orient order ($q_{l}$, $Q_{l}$, $W_{l}$, $\hat{W}_{l}$) for arbitrary angular moment order $l$  with the neighbor information from Voronoi analysis. Face area weighted version can be specified if required. 
+2. self intermediate scattering function for all or selected atoms with a specified voronoi index.
 
 
 

@@ -17,6 +17,7 @@ def _wigner_3j_values(l):
 
 class BondOrientOrder:
     def __init__(self, atoms, voro_info, weighted=False):
+        self.atoms = atoms
         self.n = len(atoms)
         assert self.n == len(voro_info['neighbors'])
         self.positions = atoms.positions
