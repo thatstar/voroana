@@ -66,7 +66,7 @@ a = bulk("Pd", cubic=True)
 v = voronoi_analysis(a,
                      outputs="ilnsv",
                      radius=get_atomic_radius(a.get_chemical_symbols()),
-                     max_face_order=6,
+                     max_face_orders=6,
                      cutoff=0.0,
                      relative=True)
 for i in range(len(a)):
