@@ -1,0 +1,88 @@
+#!/usr/bin/env python
+
+import sys
+import argparse
+import numpy as np
+import tqdm
+from ase import Atoms
+from matscipy.neighbours import neighbour_list
+from voroana import get_atomic_radius, voronoi_analysis
+from voroana.analysis import BondOrientOrder
+from voroana.io import read_dump
+
+
+def frame2atoms(frame, symbols):
+    dct = {i + 1: symbols[i] for i in range(len(symbols))}
+    positions = frame['positions']
+    types = frame['types']
+    box = frame['box']
+    s = [dct[i] for i in types]
+    atoms = Atoms(s, positions=positions, cell=box, pbc=True)
+
+    return atoms
+
+
+def gr_one(frame, symbols, l, rcut, nbins, largeq):
+    radius = get_atomic_radius(symbols)
+    atoms = frame2atoms(frame, symbols)
+    voro = voronoi_analysis(atoms, "nNs", radius=radius)
+    boo = BondOrientOrder(atoms, voro, weighted=True)
+    if largeq:
+        qlm = [boo.compute_Q_lm(l, m) for m in range(-l, l + 1)]
+    else:
+        qlm = [boo.compute_q_lm(l, m) for m in range(-l, l + 1)]
+    qlm = np.array(qlm).T
+    ia, ja, dij = neighbour_list("ijd", atoms, cutoff=rcut)
+    qij = np.real(np.sum(qlm[ja, :]*np.conj(qlm[ia, :]), axis=1))
+    h0, bin_edges = np.histogram(dij, bins=nbins, range=(0, rcut))
+    h1, bin_edges = np.histogram(dij, bins=nbins, range=(0, rcut), weights=qij)
+
+    return h0, h1, bin_edges, len(atoms), atoms.get_volume()
+
+
+def parse_cmd():
+    parser = argparse.ArgumentParser(description="Calculate G(r) and Gl(r) for a dump file")
+    add = parser.add_argument
+    add("-l", type=int, default=6, help="angular moment to calculate Gl(r)")
+    add("-r", "--rcut", type=float, default=10, help="radial cutoff")
+    add("-n", "--nbins", type=int, default=100, help="number of bins to calculate histogram")
+    add("--smallq", action="store_true", help="use small q without coarse grain")
+    add("symbols", type=str, help="colon separated chemical symbols")
+    add("dumpfile", type=str, help="dump file")
+    add("output", type=str, help="output file")
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_cmd()
+    l = args.l
+    rcut = args.rcut
+    nbins = args.nbins
+    symbols = args.symbols.split(',')
+    dumpfile = args.dumpfile
+    outfile = args.output
+    largeq = args.smallq == False
+    dump = read_dump(dumpfile)
+    ndumps = 0
+    gr = np.zeros((nbins, 4), dtype=np.float64)
+    for frame in tqdm.tqdm(dump):
+        h0, h1, bin_edges, natoms, volume = \
+            gr_one(frame, symbols, l, rcut, nbins, largeq)
+        gr[:, 1] += h0
+        gr[:, 2] += h1
+        ndumps += 1
+    gr[:, 0] = 0.5*(bin_edges[1:] + bin_edges[0:-1])
+    factor = (4*np.pi/3)*(bin_edges[1:]**3 - bin_edges[0:-1]**3)*natoms/volume
+    gr[:, 1] /= factor*natoms*ndumps
+    gr[:, 2] *= 4*np.pi/(l + 1)
+    gr[:, 2] /= factor*natoms*ndumps
+    gr[:, 3] = np.nan
+    mask = gr[:, 1] != 0
+    gr[mask, 3] = gr[mask, 2]/gr[mask, 1]
+    np.savetxt(outfile, gr)
+
+
+if __name__ == "__main__":
+    main()
+
